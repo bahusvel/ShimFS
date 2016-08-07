@@ -3,20 +3,32 @@
 
 #include <unistd.h>
 
+/* Currently supported ops, refer to link below for explanation of the macro
+  https://natecraun.net/articles/struct-iteration-through-abuse-of-the-c-preprocessor.html
+ */
+#define OPLIST                                                                 \
+	X(open)                                                                    \
+	X(read)                                                                    \
+	X(write)                                                                   \
+	X(lseek)                                                                   \
+	X(close)
+
 /* Libc functions */
-int (*libc_open)(const char *path, int oflag, ...);
-ssize_t (*libc_read)(int fildes, void *buf, size_t nbyte);
-ssize_t (*libc_write)(int fildes, const void *buf, size_t nbyte);
-off_t (*libc_lseek)(int fildes, off_t offset, int whence);
-int (*libc_close)(int fildes);
+typedef int (*type_open)(const char *path, int oflag, ...);
+typedef ssize_t (*type_read)(int fildes, void *buf, size_t nbyte);
+typedef ssize_t (*type_write)(int fildes, const void *buf, size_t nbyte);
+typedef off_t (*type_lseek)(int fildes, off_t offset, int whence);
+typedef int (*type_close)(int fildes);
+
+#define X(n) extern type_##n libc_##n;
+OPLIST
+#undef X
 /* end libc funcs */
 
 struct shimfs_ops {
-	int (*open)(const char *path, int oflag, ...);
-	int (*read)(int fildes, void *buf, size_t nbyte);
-	int (*write)(int fildes, const void *buf, size_t nbyte);
-	off_t (*lseek)(int fildes, off_t offset, int whence);
-	int (*close)(int fildes);
+#define X(n) type_##n n;
+	OPLIST
+#undef X
 };
 
 #define LIST_INSERT(item_ptr, list)                                            \

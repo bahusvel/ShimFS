@@ -1,24 +1,30 @@
 .PHONY: clean
 
-all: clean cryptomalloc test
+CFLAGS= -W -fPIC -Wall -Wextra -O -g -std=c99 -Iinclude
 
-test:
-	gcc -std=c99 CryptoMallocTest/main.c -o test
+all: clean test
+
+test: simple_test
+
+run:
+	./cmalloc.sh python3
 
 clean:
-	rm -f *.o *.so monitor test malloc_rewrite
+	rm -f *.o *.so
 
-libsegments: aes.o
-	gcc -W -fPIC -Wall -Wextra -O2 -g -std=c99 -c -I./CryptoMalloc/ CryptoSegments/segments.c
-	gcc $(LDFLAGS) -o CryptoSegments.so segments.o aes.o -lrt -lpthread -lelf
+dispatch.o:
+	gcc -c $(CFLAGS) lib/dispatch.c -o dispatch.o
 
-cryptomalloc: aes.o
-	gcc $(CFLAGS) -c CryptoMalloc/main.c
-	gcc $(LDFLAGS) -o CryptoMalloc.so main.o aes.o -lrt
+main.o:
+	gcc -c $(CFLAGS) lib/main.c -o main.o
 
-segment_test:
-	gcc -std=c99 -I./CryptoSegments/ CryptoMallocTest/segment_test.c -o segment_test
-	./segment_test
+libShimFS: main.o dispatch.o
+	gcc -o libShimFS.dylib main.o dispatch.o -ldl -shared
+
+simple_test: libShimFS
+	gcc -c $(CFLAGS) test/helloworld.c -o helloworld.o
+	gcc -o simple_test helloworld.o -L. -lShimFS
+	./simple_test
 
 segments_run: clean libsegments test
 	LD_PRELOAD=./CryptoSegments.so python2
@@ -26,6 +32,3 @@ segments_run: clean libsegments test
 malloc_hook: clean
 	gcc -I distorm/include Experiments/malloc_rewrite.c -o malloc_rewrite -ldistorm3 -ldl
 	./malloc_rewrite
-
-run:
-	./cmalloc.sh python3

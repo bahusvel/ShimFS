@@ -46,13 +46,14 @@ ssize_t read(int fildes, void *buf, size_t nbyte) {
 		return fs->ops.read(fildes, buf, nbyte);
 	return libc_read(fildes, buf, nbyte);
 }
-
 ssize_t write(int fildes, const void *buf, size_t nbyte) {
+	printf("Hi\n");
 	GuestFS *fs;
 	if ((fs = fd_filter(fildes)))
 		return fs->ops.write(fildes, buf, nbyte);
 	return libc_write(fildes, buf, nbyte);
 }
+
 off_t lseek(int fildes, off_t offset, int whence) {
 	GuestFS *fs;
 	if ((fs = fd_filter(fildes)))
