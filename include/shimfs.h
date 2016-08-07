@@ -1,28 +1,50 @@
-typedef struct shimfs_operations {
-	int (*getattr)(const char *, struct stat *);
-	int (*readlink)(const char *, char *, size_t);
-	int (*getdir)(const char *, fuse_dirh_t, fuse_dirfil_t);
-	int (*mknod)(const char *, mode_t, dev_t);
-	int (*mkdir)(const char *, mode_t);
-	int (*unlink)(const char *);
-	int (*rmdir)(const char *);
-	int (*symlink)(const char *, const char *);
-	int (*rename)(const char *, const char *);
-	int (*link)(const char *, const char *);
-	int (*chmod)(const char *, mode_t);
-	int (*chown)(const char *, uid_t, gid_t);
-	int (*truncate)(const char *, off_t);
-	int (*utime)(const char *, struct utimbuf *);
-	int (*open)(const char *, struct fuse_file_info *);
-	int (*read)(const char *, char *, size_t, off_t, struct fuse_file_info *);
-	int (*write)(const char *, const char *, size_t, off_t,
-				 struct fuse_file_info *);
-	int (*statfs)(const char *, struct statfs *);
-	int (*flush)(const char *, struct fuse_file_info *);
-	int (*release)(const char *, struct fuse_file_info *);
-	int (*fsync)(const char *, int, struct fuse_file_info *);
-	int (*setxattr)(const char *, const char *, const char *, size_t, int);
-	int (*getxattr)(const char *, const char *, char *, size_t);
-	int (*listxattr)(const char *, char *, size_t);
-	int (*removexattr)(const char *, const char *);
-} shimfs_operations;
+#ifndef __SHIMFS__
+#define __SHIMFS__
+
+#include <unistd.h>
+
+/* Libc functions */
+int (*libc_open)(const char *path, int oflag, ...);
+ssize_t (*libc_read)(int fildes, void *buf, size_t nbyte);
+ssize_t (*libc_write)(int fildes, const void *buf, size_t nbyte);
+off_t (*libc_lseek)(int fildes, off_t offset, int whence);
+int (*libc_close)(int fildes);
+/* end libc funcs */
+
+struct shimfs_ops {
+	int (*open)(const char *path, int oflag, ...);
+	int (*read)(int fildes, void *buf, size_t nbyte);
+	int (*write)(int fildes, const void *buf, size_t nbyte);
+	off_t (*lseek)(int fildes, off_t offset, int whence);
+	int (*close)(int fildes);
+};
+
+#define LIST_INSERT(item_ptr, list)                                            \
+	item_ptr->next = list.next;                                                \
+	list.next = item_ptr
+
+#define LIST_FOREACH(iter_ptr, list)                                           \
+	for (iter_ptr = list.next; iter_ptr != NULL; iter_ptr = iter_ptr->next)
+
+struct path_node {
+	const char *path;
+	struct path_node *next;
+};
+
+struct fd_node {
+	const int fd;
+	struct fd_node *next;
+};
+
+typedef struct GuestFS {
+	const char *name;
+	void *dlhandle;
+	struct path_node paths;
+	struct fd_node fds;
+	struct shimfs_ops ops;
+	struct GuestFS *next;
+} GuestFS;
+
+extern GuestFS fs_list;
+
+#endif
