@@ -38,7 +38,7 @@ static void *libc_symbol_for(const char *symbol_name) {
 		printf("dladdr failed\n");
 		exit(-1);
 	}
-	printf("%s\n", info.dli_fname);
+	printf("%s(%p) - %s\n", symbol_name, symbol, info.dli_fname);
 	return symbol;
 }
 
