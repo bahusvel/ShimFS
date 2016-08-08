@@ -7,6 +7,7 @@
 
 GuestFS fs_list;
 
+// allocate libc handles
 #define X(n) type_##n libc_##n;
 OPLIST
 #undef X
@@ -42,10 +43,26 @@ static void *libc_symbol_for(const char *symbol_name) {
 	return symbol;
 }
 
+// TODO in future this is to load all filesystems in a directory, for now its
+// just gonna be one, pointed to by SHIMFS_FSPATH
+static void load_filesystems() {
+	char *fspath = getenv(SHIMFS_FSPATH);
+	if (fspath == NULL) {
+		printf(SHIMFS_FSPATH " not defined, cannot load file systems\n");
+		exit(-1);
+	}
+	if (load_guestfs(fspath)) {
+		printf("Failed to load %s\n", fspath);
+		exit(-1);
+	}
+}
+
 __attribute__((constructor)) static void shimfs_constructor() {
+// load libc symbols
 #define X(n) libc_##n = libc_symbol_for(#n);
 	OPLIST
 #undef X
+	load_filesystems();
 }
 
 __attribute__((destructor)) static void shimfs_destructor() {}

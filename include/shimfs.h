@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 
+#define SHIMFS_FSPATH "SHIMFS_FSPATH"
 /* Currently supported ops, refer to link below for explanation of the macro
   https://natecraun.net/articles/struct-iteration-through-abuse-of-the-c-preprocessor.html
  */
@@ -25,6 +26,8 @@ OPLIST
 #undef X
 /* end libc funcs */
 
+/* it might be useful to provide some way for guestfs to communicate to shimfs
+ * in response to requests (i.e.) tell shimfs to use libc, or something else */
 struct shimfs_ops {
 #define X(n) type_##n n;
 	OPLIST
@@ -44,7 +47,7 @@ struct path_node {
 };
 
 struct fd_node {
-	const int fd;
+	int fd;
 	struct fd_node *next;
 };
 

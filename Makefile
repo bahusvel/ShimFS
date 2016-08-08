@@ -21,10 +21,13 @@ main.o:
 libShimFS: main.o dispatch.o
 	gcc -o libShimFS.dylib main.o dispatch.o -ldl -shared
 
-simple_test: libShimFS
+hellofs:
+	make -C example/hellofs
+
+simple_test: libShimFS hellofs
 	gcc -c $(CFLAGS) test/helloworld.c -o helloworld.o
 	gcc -o simple_test helloworld.o -L. -lShimFS
-	./simple_test
+	SHIMFS_FSPATH=example/hellofs/libHelloFS.so ./simple_test
 
 segments_run: clean libsegments test
 	LD_PRELOAD=./CryptoSegments.so python2
