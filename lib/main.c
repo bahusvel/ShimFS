@@ -7,6 +7,18 @@
 
 GuestFS fs_list;
 
+struct path_node *new_path_node(GuestFS *self) {
+	struct path_node *node = malloc(sizeof(struct path_node));
+	LIST_INSERT(node, self->paths);
+	return node;
+}
+
+struct fd_node *new_fd_node(GuestFS *self) {
+	struct fd_node *node = malloc(sizeof(struct fd_node));
+	LIST_INSERT(node, self->fds);
+	return node;
+}
+
 // allocate libc handles
 #define X(n) type_##n libc_##n;
 OPLIST
@@ -21,6 +33,13 @@ static int load_guestfs(const char *path) {
 		dlsym(guest->dlhandle, nameof(guestfs_init));
 	if (init_func == NULL)
 		goto fail_and_free;
+
+// load guestfs fs symbols
+#define X(n) guest->ops.n = dlsym(guest->dlhandle, #n);
+	OPLIST
+#undef X
+
+	// init func has the opportunity to overwrite symbols loaded by dlsym
 	if (init_func(guest) != 0)
 		goto fail_and_free;
 
@@ -44,7 +63,7 @@ static void *libc_symbol_for(const char *symbol_name) {
 }
 
 // TODO in future this is to load all filesystems in a directory, for now its
-// just gonna be one, pointed to by SHIMFS_FSPATH
+// just gonna be one, located at SHIMFS_FSPATH
 static void load_filesystems() {
 	char *fspath = getenv(SHIMFS_FSPATH);
 	if (fspath == NULL) {
@@ -63,6 +82,7 @@ __attribute__((constructor)) static void shimfs_constructor() {
 	OPLIST
 #undef X
 	load_filesystems();
+	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
 
 __attribute__((destructor)) static void shimfs_destructor() {}

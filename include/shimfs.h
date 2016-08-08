@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #define SHIMFS_FSPATH "SHIMFS_FSPATH"
+
 /* Currently supported ops, refer to link below for explanation of the macro
   https://natecraun.net/articles/struct-iteration-through-abuse-of-the-c-preprocessor.html
  */
@@ -14,20 +15,20 @@
 	X(lseek)                                                                   \
 	X(close)
 
-/* Libc functions */
 typedef int (*type_open)(const char *path, int oflag, ...);
 typedef ssize_t (*type_read)(int fildes, void *buf, size_t nbyte);
 typedef ssize_t (*type_write)(int fildes, const void *buf, size_t nbyte);
 typedef off_t (*type_lseek)(int fildes, off_t offset, int whence);
 typedef int (*type_close)(int fildes);
 
+// declare libc functions
 #define X(n) extern type_##n libc_##n;
 OPLIST
 #undef X
-/* end libc funcs */
 
-/* it might be useful to provide some way for guestfs to communicate to shimfs
- * in response to requests (i.e.) tell shimfs to use libc, or something else */
+/*  TODO it might be useful to provide some way for guestfs to communicate to
+ * shimfs in response to requests (i.e.) tell shimfs to use libc, or something
+ * else */
 struct shimfs_ops {
 #define X(n) type_##n n;
 	OPLIST

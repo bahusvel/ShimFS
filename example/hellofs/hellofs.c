@@ -13,14 +13,17 @@ int open(const char *path, int oflag, ...) {
 }
 
 ssize_t read(int fildes, void *buf, size_t nbyte) {
-	memcpy(buf, "hello", nbyte < 6 ? nbyte : 6);
+	memcpy(buf, "world", nbyte < 6 ? nbyte : 6);
 	return nbyte < 6 ? nbyte : 6;
 }
 
 int guestfs_init(GuestFS *self) {
 	self_global = self;
+	/* Optional, ShimFS will automatically load symbols that are named
+	correctly, but this can be used as an overide
 	self->ops.open = open;
 	self->ops.read = read;
+	*/
 	struct path_node *node = new_path_node(self);
 	node->path = "/hello";
 	return 0;
