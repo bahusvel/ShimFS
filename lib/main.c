@@ -1,4 +1,5 @@
 #include "guestfs.h"
+#include "hijack.h"
 #include "shimfs.h"
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -81,6 +82,8 @@ __attribute__((constructor)) static void shimfs_constructor() {
 #define X(n) libc_##n = libc_symbol_for(#n);
 	OPLIST
 #undef X
+	printf("Assembly for write():\n");
+	print_assembly(libc_write, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
