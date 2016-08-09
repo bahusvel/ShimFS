@@ -51,19 +51,25 @@ fail_and_free:
 	return -1;
 }
 
-static void *libc_symbol_for(const char *symbol_name) {
+static inline void *symbol_from_lib(void *dlhandle, const char *symbol_name) {
 	// locate libc funcions (potentially through libc file)
-	void *symbol = dlsym(RTLD_NEXT, symbol_name);
-	Dl_info info;
-	if (dladdr(symbol, &info) == 0) {
-		printf("dladdr failed\n");
+	void *symbol = dlsym(dlhandle, symbol_name);
+	if (symbol == NULL) {
+		printf("Failed to fetch %s\n", symbol_name);
 		exit(-1);
 	}
-	printf("%s(%p) - %s\n", symbol_name, symbol, info.dli_fname);
 	return symbol;
 }
 
-// TODO in future this is to load all filesystems in a directory, for now its
+static inline void lib_for_symbol(void *symbol, Dl_info *info) {
+	if (dladdr(symbol, info) == 0 || info->dli_fname == NULL) {
+		printf("Dladdr failed for %p\n", symbol);
+		exit(-1);
+	}
+}
+
+// TODO in future this is to load all filesystems in a directory, for now
+// its
 // just gonna be one, located at SHIMFS_FSPATH
 static void load_filesystems() {
 	char *fspath = getenv(SHIMFS_FSPATH);
@@ -79,11 +85,21 @@ static void load_filesystems() {
 
 __attribute__((constructor)) static void shimfs_constructor() {
 // load libc symbols
-#define X(n) libc_##n = libc_symbol_for(#n);
+#define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
-	printf("Assembly for write():\n");
-	print_assembly(libc_write, 100);
+
+	/* A second copy of libc is fetched and loaded, functions of the original
+	 * libc will be rewritten and hijacked, the second copy will remain
+	 * untouched and its functions will be called instead when libc
+	 * functionality is wanted*/
+	Dl_info libc_info;
+	lib_for_symbol(libc_open, &libc_info);
+	// TODO, load the copy of libc and check if its really a copy by comparing
+	// function pointers
+
+	printf("Assembly for open():\n");
+	print_assembly(libc_open, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
