@@ -25,6 +25,23 @@ struct fd_node *new_fd_node(GuestFS *self) {
 OPLIST
 #undef X
 
+static inline void *symbol_from_lib(void *dlhandle, const char *symbol_name) {
+	// locate libc funcions (potentially through libc file)
+	void *symbol = dlsym(dlhandle, symbol_name);
+	if (symbol == NULL) {
+		printf("Failed to fetch %s\n", symbol_name);
+		exit(-1);
+	}
+	return symbol;
+}
+
+static inline void lib_for_symbol(void *symbol, Dl_info *info) {
+	if (dladdr(symbol, info) == 0 || info->dli_fname == NULL) {
+		printf("Dladdr failed for %p\n", symbol);
+		exit(-1);
+	}
+}
+
 static int load_guestfs(const char *path) {
 	GuestFS *guest = malloc(sizeof(GuestFS));
 	guest->dlhandle = dlopen(path, RTLD_NOW);
@@ -49,23 +66,6 @@ static int load_guestfs(const char *path) {
 fail_and_free:
 	free(guest);
 	return -1;
-}
-
-static inline void *symbol_from_lib(void *dlhandle, const char *symbol_name) {
-	// locate libc funcions (potentially through libc file)
-	void *symbol = dlsym(dlhandle, symbol_name);
-	if (symbol == NULL) {
-		printf("Failed to fetch %s\n", symbol_name);
-		exit(-1);
-	}
-	return symbol;
-}
-
-static inline void lib_for_symbol(void *symbol, Dl_info *info) {
-	if (dladdr(symbol, info) == 0 || info->dli_fname == NULL) {
-		printf("Dladdr failed for %p\n", symbol);
-		exit(-1);
-	}
 }
 
 // TODO in future this is to load all filesystems in a directory, for now
@@ -95,11 +95,19 @@ __attribute__((constructor)) static void shimfs_constructor() {
 	 * functionality is wanted*/
 	Dl_info libc_info;
 	lib_for_symbol(libc_open, &libc_info);
-	// TODO, load the copy of libc and check if its really a copy by comparing
-	// function pointers
+	void *dlhandle = dlopen(libc_info.dli_fname, RTLD_LOCAL);
+	if (dlhandle == NULL) {
+		printf("Dlopen failed: %s\n", dlerror());
+		exit(-1);
+	}
+	void *new_open = symbol_from_lib(dlhandle, "open");
+	Dl_info new_libc_info;
+	lib_for_symbol(new_open, &new_libc_info);
+	printf("Old open %p-%p, new open %p-%p\n", libc_open, libc_info.dli_fbase,
+		   new_open, new_libc_info.dli_fbase);
 
-	printf("Assembly for open():\n");
-	print_assembly(libc_open, 100);
+	// printf("Assembly for open():\n");
+	// print_assembly(libc_open, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
