@@ -5,8 +5,14 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ucontext.h>
 
 GuestFS fs_list;
+
+// allocate libc handles
+#define X(n) type_##n libc_##n;
+OPLIST
+#undef X
 
 struct path_node *new_path_node(GuestFS *self) {
 	struct path_node *node = malloc(sizeof(struct path_node));
@@ -19,11 +25,6 @@ struct fd_node *new_fd_node(GuestFS *self) {
 	LIST_INSERT(node, self->fds);
 	return node;
 }
-
-// allocate libc handles
-#define X(n) type_##n libc_##n;
-OPLIST
-#undef X
 
 static inline void *symbol_from_lib(void *dlhandle, const char *symbol_name) {
 	// locate libc funcions (potentially through libc file)
@@ -81,6 +82,13 @@ static void load_filesystems() {
 		printf("Failed to load %s\n", fspath);
 		exit(-1);
 	}
+}
+
+static inline long execute_syscall(ucontext_t *context) {
+	long output;
+	mcontext_t mcontext = context->uc_mcontext;
+	asm volatile("syscall" : "=a"(output) : "d"(mcontext->__ss.__rax));
+	return output;
 }
 
 __attribute__((constructor)) static void shimfs_constructor() {
