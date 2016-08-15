@@ -1,6 +1,7 @@
 #ifndef __SHIMFS__
 #define __SHIMFS__
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #define SHIMFS_FSPATH "SHIMFS_FSPATH"
@@ -22,7 +23,7 @@ typedef off_t (*type_lseek)(int fildes, off_t offset, int whence);
 typedef int (*type_close)(int fildes);
 
 // declare libc functions
-#define X(n) extern type_##n libc_##n;
+#define X(n) type_##n libc_##n;
 OPLIST
 #undef X
 

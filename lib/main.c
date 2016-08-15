@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "guestfs.h"
 #include "hijack.h"
 #include "shimfs.h"
@@ -84,18 +86,45 @@ static void load_filesystems() {
 	}
 }
 
+/* This is for future where syscalls are overriden
 static inline long execute_syscall(ucontext_t *context) {
 	long output;
 	mcontext_t mcontext = context->uc_mcontext;
-	asm volatile("syscall" : "=a"(output) : "d"(mcontext->__ss.__rax));
+	__asm__ volatile("syscall" : "=a"(output) : "d"(mcontext.gregs));
 	return output;
 }
+*/
 
-__attribute__((constructor)) static void shimfs_constructor() {
-// load libc symbols
+#ifdef __linux__
+// LINUX version of GLIBC patching routine
+static inline void patch_glibc() {
 #define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
+	Dl_info libc_info;
+	lib_for_symbol(libc_open, &libc_info);
+	void *handle = dlmopen(LM_ID_NEWLM, libc_info.dli_fname, RTLD_LOCAL);
+	if (handle == NULL) {
+		printf("Failed loading glibc\n");
+		exit(-1);
+	}
+	printf("Address of glibc is %p, address of new one is %p\n", libc_open,
+		   symbol_from_lib(handle, "open"));
+}
+
+#elif __APPLE__
+
+static inline void patch_glibc() {
+#define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
+	OPLIST
+#undef X
+}
+
+#endif
+
+__attribute__((constructor)) static void shimfs_constructor() {
+	// load libc symbols
+	patch_glibc();
 
 	printf("Assembly for open():\n");
 	print_assembly(libc_open, 100);

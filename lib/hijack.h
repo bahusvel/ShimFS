@@ -135,7 +135,7 @@ sym_hook hijack_start(void *target, void *new) {
 		hook.hijack_size = 6;
 		// NOTE push $addr; ret
 		memcpy(hook.n_code, "\x68\x00\x00\x00\x00\xc3", 6);
-		*(unsigned int *)(&hook.n_code[1]) = (unsigned int)new;
+		*(uint32_t *)(&hook.n_code[1]) = (uintptr_t) new;
 	}
 	memcpy(hook.o_code, target, MAX_OCODE_SIZE);
 	disable_wp(target);
