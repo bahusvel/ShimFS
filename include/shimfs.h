@@ -1,6 +1,7 @@
 #ifndef __SHIMFS__
 #define __SHIMFS__
 
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -14,13 +15,33 @@
 	X(read)                                                                    \
 	X(write)                                                                   \
 	X(lseek)                                                                   \
-	X(close)
+	X(close)                                                                   \
+	X(creat)                                                                   \
+	X(unlink)                                                                  \
+	X(truncate)                                                                \
+	X(ftruncate)                                                               \
+	X(rename)                                                                  \
+	X(access)                                                                  \
+	X(fstat)                                                                   \
+	X(stat)                                                                    \
+	X(mkdir)                                                                   \
+	X(rmdir)
 
 typedef int (*type_open)(const char *path, int oflag, ...);
 typedef ssize_t (*type_read)(int fildes, void *buf, size_t nbyte);
 typedef ssize_t (*type_write)(int fildes, const void *buf, size_t nbyte);
 typedef off_t (*type_lseek)(int fildes, off_t offset, int whence);
 typedef int (*type_close)(int fildes);
+typedef int (*type_creat)(const char *path, mode_t mode);
+typedef int (*type_unlink)(const char *path);
+typedef int (*type_truncate)(const char *path, off_t length);
+typedef int (*type_ftruncate)(int fildes, off_t length);
+typedef int (*type_rename)(const char *old, const char *new);
+typedef int (*type_access)(const char *path, int amode);
+typedef int (*type_fstat)(int fildes, struct stat *buf);
+typedef int (*type_stat)(const char *path, struct stat *buf);
+typedef int (*type_mkdir)(const char *path, mode_t mode);
+typedef int (*type_rmdir)(const char *path);
 
 // declare libc functions
 #define X(n) type_##n libc_##n;
