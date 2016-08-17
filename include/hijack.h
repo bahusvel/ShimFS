@@ -125,7 +125,9 @@ static void print_assembly(void *target, int bytes) {
 }
 
 sym_hook hijack_start(void *target, void *new) {
-	sym_hook hook;
+	sym_hook hook = {};
+	if (target == new)
+		return hook;
 	hook.addr = target;
 	memcpy(hook.o_code, target, MAX_OCODE_SIZE);
 	// check if jump needs to be a long jump
