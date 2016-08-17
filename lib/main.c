@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/shm.h>
 
 GuestFS fs_list;
 
@@ -128,8 +129,20 @@ static inline void patch_glibc() {
 #define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
-	printf("Old open %p, new open %p\n", libc_open, open);
-	printf("%p\n", load_filesystems);
+	printf("Old open %p, new open %p\n", libc_open,
+		   symbol_from_lib(RTLD_DEFAULT, "open"));
+	/* The only thing that can be done now is to find the end of the current
+	 * address space, and map something at the end of it, hoping that it is
+	 * close enough to the libc, alternatively one could find libc itself and
+	 * look for gaps around it, of the sufficient size required to allocate
+	 * trampolines, from there on I can simply mmap it so theoretical algorithm
+	 is as follows:
+	 1) Locate libc start via lib_for_symbol it should be info.dli_saddr
+	 2) Do something similar to what vmmap does on osx
+	 3) Locate a gap big enought to fit N trampolines
+	 4) mmap(gap_addr, sizeof(n_trampolines))
+	 5) set libc_n to corresponding trampoline address
+	 */
 }
 
 #endif
