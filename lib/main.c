@@ -104,7 +104,6 @@ static inline void patch_glibc() {
 
 	Dl_info libc_info;
 	lib_for_symbol(orig_open, &libc_info);
-	printf("libc location %s\n", libc_info.dli_fname);
 	void *handle =
 		dlmopen(LM_ID_NEWLM, libc_info.dli_fname, RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL) {
@@ -116,7 +115,8 @@ static inline void patch_glibc() {
 			   "loaded\n");
 		exit(-1);
 	}
-	printf("LIBC loaded successfully\n");
+	printf("Libc %s loaded successfully\n", libc_info.dli_fname);
+
 #define X(n)                                                                   \
 	libc_##n = symbol_from_lib(handle, #n);                                    \
 	hijack_start(orig_##n, n);
@@ -130,6 +130,7 @@ static inline void patch_glibc() {
 #define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
+	// mac doesnt have dlmopen :(
 }
 
 #endif
@@ -137,8 +138,6 @@ static inline void patch_glibc() {
 __attribute__((constructor)) static void shimfs_constructor() {
 	// load libc symbols
 	patch_glibc();
-	printf("Assembly for open():\n");
-	print_assembly(libc_open, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
