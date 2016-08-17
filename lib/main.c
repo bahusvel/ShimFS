@@ -71,8 +71,7 @@ fail_and_free:
 }
 
 // TODO in future this is to load all filesystems in a directory, for now
-// its
-// just gonna be one, located at SHIMFS_FSPATH
+// its just gonna be one, located at SHIMFS_FSPATH
 static void load_filesystems() {
 	char *fspath = getenv(SHIMFS_FSPATH);
 	if (fspath == NULL) {
@@ -129,8 +128,8 @@ static inline void patch_glibc() {
 #define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
-	printf("Address of libc open %p\n", libc_open);
-	// mac doesnt have dlmopen :(
+	printf("Old open %p, new open %p\n", libc_open, open);
+	printf("%p\n", load_filesystems);
 }
 
 #endif
@@ -138,7 +137,7 @@ static inline void patch_glibc() {
 __attribute__((constructor)) static void shimfs_constructor() {
 	// load libc symbols
 	patch_glibc();
-	print_assembly(libc_lseek, 100);
+	// print_assembly(libc_open, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
