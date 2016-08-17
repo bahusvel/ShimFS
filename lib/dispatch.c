@@ -49,7 +49,6 @@ ssize_t read(int fildes, void *buf, size_t nbyte) {
 }
 
 ssize_t write(int fildes, const void *buf, size_t nbyte) {
-	printf("Hi\n");
 	GuestFS *fs;
 	if ((fs = fd_filter(fildes)))
 		return fs->ops.write(fildes, buf, nbyte);

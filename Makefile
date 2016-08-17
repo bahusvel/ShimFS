@@ -25,7 +25,7 @@ run:
 	./cmalloc.sh python3
 
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.so core
 
 dispatch.o:
 	gcc -c $(CFLAGS) lib/dispatch.c -o dispatch.o
@@ -44,5 +44,5 @@ hellofs:
 
 simple_test: libShimFS hellofs
 	gcc -c $(CFLAGS) test/helloworld.c -o helloworld.o
-	gcc -o simple_test helloworld.o -L. -lShimFS
+	gcc -o simple_test helloworld.o -L. -ldistorm3 -lShimFS
 	$(LIB_PATH) SHIMFS_FSPATH=example/hellofs/libHelloFS.so ./simple_test

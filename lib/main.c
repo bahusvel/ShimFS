@@ -98,18 +98,30 @@ static inline long execute_syscall(ucontext_t *context) {
 #ifdef __linux__
 // LINUX version of GLIBC patching routine
 static inline void patch_glibc() {
-#define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
+#define X(n) type_##n orig_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
+
 	Dl_info libc_info;
-	lib_for_symbol(libc_open, &libc_info);
-	void *handle = dlmopen(LM_ID_NEWLM, libc_info.dli_fname, RTLD_LOCAL);
+	lib_for_symbol(orig_open, &libc_info);
+	printf("libc location %s\n", libc_info.dli_fname);
+	void *handle =
+		dlmopen(LM_ID_NEWLM, libc_info.dli_fname, RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL) {
-		printf("Failed loading glibc\n");
+		printf("Failed loading glibc %s\n", dlerror());
 		exit(-1);
 	}
-	printf("Address of glibc is %p, address of new one is %p\n", libc_open,
-		   symbol_from_lib(handle, "open"));
+	if (orig_open == symbol_from_lib(handle, "open")) {
+		printf("Your OS doesnt support dlmopen properly, new glibc was not "
+			   "loaded\n");
+		exit(-1);
+	}
+	printf("LIBC loaded successfully\n");
+#define X(n)                                                                   \
+	libc_##n = symbol_from_lib(handle, #n);                                    \
+	hijack_start(orig_##n, n);
+	OPLIST
+#undef X
 }
 
 #elif __APPLE__
@@ -125,7 +137,6 @@ static inline void patch_glibc() {
 __attribute__((constructor)) static void shimfs_constructor() {
 	// load libc symbols
 	patch_glibc();
-
 	printf("Assembly for open():\n");
 	print_assembly(libc_open, 100);
 	load_filesystems();
