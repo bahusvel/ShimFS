@@ -42,6 +42,10 @@ libShimFS: main.o dispatch.o libdistorm
 hellofs:
 	make -C example/hellofs
 
+better_hijack: clean
+	gcc -Iinclude -Idistorm/include -L. -o better_hijack test/better_hijack.c -ldistorm3
+	./better_hijack
+
 simple_test: libShimFS hellofs
 	gcc -c $(CFLAGS) test/helloworld.c -o helloworld.o
 	gcc -o simple_test helloworld.o -L. -ldistorm3 -lShimFS

@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ucontext.h>
 
 GuestFS fs_list;
 
@@ -130,6 +129,7 @@ static inline void patch_glibc() {
 #define X(n) libc_##n = symbol_from_lib(RTLD_NEXT, #n);
 	OPLIST
 #undef X
+	printf("Address of libc open %p\n", libc_open);
 	// mac doesnt have dlmopen :(
 }
 
@@ -138,6 +138,7 @@ static inline void patch_glibc() {
 __attribute__((constructor)) static void shimfs_constructor() {
 	// load libc symbols
 	patch_glibc();
+	print_assembly(libc_lseek, 100);
 	load_filesystems();
 	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
