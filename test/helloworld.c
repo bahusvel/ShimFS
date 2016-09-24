@@ -15,6 +15,4 @@ int main() {
 		printf("Read returned less than expected\n");
 	}
 	printf("%s\n", hellobuf);
-	while (1)
-		sleep(1);
 }

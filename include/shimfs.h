@@ -22,8 +22,6 @@
 	X(ftruncate)                                                               \
 	X(rename)                                                                  \
 	X(access)                                                                  \
-	X(fstat)                                                                   \
-	X(stat)                                                                    \
 	X(mkdir)                                                                   \
 	X(rmdir)
 

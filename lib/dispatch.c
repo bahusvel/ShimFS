@@ -73,8 +73,11 @@ int ftruncate(int fildes, off_t length) {
 }
 int rename(const char *old, const char *new); // TODO needs special treatment
 int access(const char *path, int amode) { PATH_WRAPPER(access, path, amode); }
-int fstat(int fildes, struct stat *buf) { FD_WRAPPER(fstat, fildes, buf); }
-int stat(const char *path, struct stat *buf) { PATH_WRAPPER(stat, path, buf); }
+
+// int fstat(int fildes, struct stat *buf) { FD_WRAPPER(fstat, fildes, buf); }
+
+// int stat(const char *path, struct stat *buf) { PATH_WRAPPER(stat, path, buf);
+// }
 int mkdir(const char *path, mode_t mode) { PATH_WRAPPER(mkdir, path, mode); }
 int rmdir(const char *path) { PATH_WRAPPER(rmdir, path); }
 

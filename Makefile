@@ -48,7 +48,10 @@ better_hijack: clean libdistorm
 	gcc -Iinclude -Idistorm/include -L. -o better_hijack test/better_hijack.c -ldistorm3
 	./better_hijack
 
-simple_test: libShimFS hellofs
+simple_test: clean libShimFS hellofs
 	gcc -c $(CFLAGS) test/helloworld.c -o helloworld.o
 	gcc -o simple_test helloworld.o -L. -ldistorm3 -lShimFS
 	$(LIB_PATH) SHIMFS_FSPATH=example/hellofs/libHelloFS.so ./simple_test
+
+gnutils_test: clean libShimFS hellofs
+	$(LIB_PATH) LD_PRELOAD=./libShimFS.so SHIMFS_FSPATH=example/hellofs/libHelloFS.so cat /hello
