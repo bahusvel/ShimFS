@@ -14,5 +14,6 @@ int main() {
 	if (read(fd, hellobuf, 6) != 6) {
 		printf("Read returned less than expected\n");
 	}
-	printf("%s\n", hellobuf);
+	printf("fd:%d, %s\n", fd, hellobuf);
+	write(fd, hellobuf, 6);
 }

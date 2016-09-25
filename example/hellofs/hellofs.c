@@ -5,7 +5,7 @@
 GuestFS *self_global = NULL;
 int fpos = 0;
 
-int open(const char *path, int oflag, ...) {
+int shim_open(const char *path, int oflag, ...) {
 	if (strcmp(path, "/hello") != 0) {
 		return 0;
 	}
@@ -15,20 +15,22 @@ int open(const char *path, int oflag, ...) {
 	return node->fd;
 }
 
-int close(int fildes) {
+int shim_close(int fildes) {
 	delete_fd_node(self_global, fildes);
 	return 0;
 }
 
-ssize_t read(int fildes, void *buf, size_t nbyte) {
+ssize_t shim_read(int fildes, void *buf, size_t nbyte) {
 	if (fpos == 6) {
 		return EOF;
 	}
 	int toread = nbyte < 6 ? nbyte : 6;
-	memcpy(buf, "world\n", toread);
+	memcpy(buf, "world", toread);
 	fpos += toread;
 	return toread;
 }
+
+// ssize_t write(int fildes, const void *buf, size_t nbyte) { return 0; }
 
 int guestfs_init(GuestFS *self) {
 	self_global = self;

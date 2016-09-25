@@ -23,14 +23,13 @@ int not_implemented_stub(const char *fs_name, char *op_name) {
 
 #define FD_WRAPPER(opname, fildes, ...)                                        \
 	GuestFS *fs;                                                               \
-	if ((fs = fd_filter(fildes)) != NULL) {                                    \
+	if ((fs = fd_filter(fildes))) {                                            \
 		if (fs->ops.opname == NULL) {                                          \
 			return not_implemented_stub(fs->name, #opname);                    \
 		} else {                                                               \
 			return fs->ops.opname(fildes, ##__VA_ARGS__);                      \
 		}                                                                      \
 	}                                                                          \
-	write(1, "hit\n", 4);                                                      \
 	return libc_##opname(fildes, ##__VA_ARGS__);
 
 GuestFS *path_filter(const char *path) {

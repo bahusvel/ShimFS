@@ -60,7 +60,7 @@ static inline void lib_for_symbol(void *symbol, Dl_info *info) {
 }
 
 static int load_guestfs(const char *path) {
-	GuestFS *guest = malloc(sizeof(GuestFS));
+	GuestFS *guest = calloc(sizeof(GuestFS), 1);
 	guest->dlhandle = dlopen(path, RTLD_NOW);
 	if ((guest->dlhandle) == NULL)
 		goto fail_and_free;
@@ -70,7 +70,7 @@ static int load_guestfs(const char *path) {
 		goto fail_and_free;
 
 // load guestfs fs symbols
-#define X(n) guest->ops.n = dlsym(guest->dlhandle, #n);
+#define X(n) guest->ops.n = dlsym(guest->dlhandle, "shim_" #n);
 	OPLIST
 #undef X
 
@@ -168,7 +168,7 @@ __attribute__((constructor)) static void shimfs_constructor() {
 	patch_glibc();
 	// print_assembly(libc_open, 100);
 	load_filesystems();
-	safe_printf("Successfuly Loaded ShimFS\n\n\n\n");
+	printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
 
 __attribute__((destructor)) static void shimfs_destructor() {}
