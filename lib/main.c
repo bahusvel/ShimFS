@@ -28,6 +28,20 @@ struct fd_node *new_fd_node(GuestFS *self) {
 	return node;
 }
 
+int delete_fd_node(GuestFS *self, int fd) {
+	struct fd_node *node;
+	struct fd_node *delete = NULL;
+	LIST_FOREACH(node, self->fds) {
+		if (node->fd == fd)
+			delete = node;
+	}
+	if (delete == NULL)
+		return -1;
+	LIST_DELETE(node, self->fds);
+	free(delete);
+	return 0;
+}
+
 static inline void *symbol_from_lib(void *dlhandle, const char *symbol_name) {
 	// locate libc funcions (potentially through libc file)
 	void *symbol = dlsym(dlhandle, symbol_name);
@@ -121,6 +135,7 @@ static inline void patch_glibc() {
 	hijack_start(orig_##n, n);
 	OPLIST
 #undef X
+	safe_printf = symbol_from_lib(handle, "printf");
 }
 
 #elif __APPLE__
@@ -143,6 +158,7 @@ static inline void patch_glibc() {
 	 4) mmap(gap_addr, sizeof(n_trampolines))
 	 5) set libc_n to corresponding trampoline address
 	 */
+	safe_printf = symbol_from_lib(RTLD_DEFAULT, "printf");
 }
 
 #endif
@@ -152,7 +168,7 @@ __attribute__((constructor)) static void shimfs_constructor() {
 	patch_glibc();
 	// print_assembly(libc_open, 100);
 	load_filesystems();
-	printf("Successfuly Loaded ShimFS\n\n\n\n");
+	safe_printf("Successfuly Loaded ShimFS\n\n\n\n");
 }
 
 __attribute__((destructor)) static void shimfs_destructor() {}

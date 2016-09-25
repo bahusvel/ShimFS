@@ -41,6 +41,8 @@ typedef int (*type_stat)(const char *path, struct stat *buf);
 typedef int (*type_mkdir)(const char *path, mode_t mode);
 typedef int (*type_rmdir)(const char *path);
 
+int (*safe_printf)(const char *format, ...);
+
 // declare libc functions
 #define X(n) type_##n libc_##n;
 OPLIST
@@ -61,6 +63,16 @@ struct shimfs_ops {
 
 #define LIST_FOREACH(iter_ptr, list)                                           \
 	for (iter_ptr = list.next; iter_ptr != NULL; iter_ptr = iter_ptr->next)
+
+#define LIST_DELETE(item_ptr, list)                                            \
+	if (list.next == item_ptr)                                                 \
+		list.next = list.next->next;                                           \
+	__typeof__(item_ptr) iter_ptr;                                             \
+	for (iter_ptr = list.next; iter_ptr->next != NULL;                         \
+		 iter_ptr = iter_ptr->next) {                                          \
+		if (iter_ptr->next == item_ptr)                                        \
+			iter_ptr->next = iter_ptr->next->next;                             \
+	}
 
 struct path_node {
 	const char *path;

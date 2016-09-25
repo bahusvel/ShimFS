@@ -5,17 +5,33 @@
 
 #define startsWith(str, prefix) strncmp(prefix, str, strlen(prefix)) == 0
 
-#define PATH_WRAPPER(name, path, ...)                                          \
-	GuestFS *fs;                                                               \
-	if ((fs = path_filter(path)))                                              \
-		return fs->ops.name(path, ##__VA_ARGS__);                              \
-	return libc_##name(path, ##__VA_ARGS__);
+int not_implemented_stub(const char *fs_name, char *op_name) {
+	safe_printf("Operation %s not implemented for %s\n", op_name, fs_name);
+	return 0;
+}
 
-#define FD_WRAPPER(name, fildes, ...)                                          \
+#define PATH_WRAPPER(opname, path, ...)                                        \
 	GuestFS *fs;                                                               \
-	if ((fs = fd_filter(fildes)))                                              \
-		return fs->ops.name(fildes, ##__VA_ARGS__);                            \
-	return libc_##name(fildes, ##__VA_ARGS__);
+	if ((fs = path_filter(path))) {                                            \
+		if (fs->ops.opname == NULL) {                                          \
+			return not_implemented_stub(fs->name, #opname);                    \
+		} else {                                                               \
+			return fs->ops.opname(path, ##__VA_ARGS__);                        \
+		}                                                                      \
+	}                                                                          \
+	return libc_##opname(path, ##__VA_ARGS__);
+
+#define FD_WRAPPER(opname, fildes, ...)                                        \
+	GuestFS *fs;                                                               \
+	if ((fs = fd_filter(fildes)) != NULL) {                                    \
+		if (fs->ops.opname == NULL) {                                          \
+			return not_implemented_stub(fs->name, #opname);                    \
+		} else {                                                               \
+			return fs->ops.opname(fildes, ##__VA_ARGS__);                      \
+		}                                                                      \
+	}                                                                          \
+	write(1, "hit\n", 4);                                                      \
+	return libc_##opname(fildes, ##__VA_ARGS__);
 
 GuestFS *path_filter(const char *path) {
 	GuestFS *fs_iter;

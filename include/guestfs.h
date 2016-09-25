@@ -12,6 +12,7 @@ int guestfs_fini(GuestFS *self);
 // these are defined within ShimFS
 struct path_node *new_path_node(GuestFS *self);
 struct fd_node *new_fd_node(GuestFS *self);
+int delete_fd_node(GuestFS *self, int fd);
 
 /* You may NEVER execute standard libc functions on this fd, as it is designed
 to be used as a dummy, to avoid collisions between in-kernel fs and ShimFS fds.

@@ -1,11 +1,12 @@
 .PHONY: clean
 
 UNAME_S := $(shell uname -s)
+PWD := $(shell pwd)
 
 ifeq ($(UNAME_S),Linux)
 	LIBNAME=libShimFS.so
 	DISTORM_MAKE=distorm/make/linux
-	DISTORM_PATH=$(DISTORM_MAKE)/libdistorm3.so
+	DISTORM_PATH=distorm/distorm3.a
 	LIB_PATH= LD_LIBRARY_PATH=./
 endif
 ifeq ($(UNAME_S),Darwin)
@@ -26,7 +27,7 @@ run:
 	./cmalloc.sh python3
 
 clean:
-	rm -rf *.o *.so core *.dSYM *.dylib
+	rm -rf *.o *.so core *.dSYM *.dylib *.a
 
 dispatch.o:
 	gcc -c $(CFLAGS) lib/dispatch.c -o dispatch.o
@@ -36,7 +37,7 @@ main.o:
 
 libdistorm: distorm
 	make -C $(DISTORM_MAKE)
-	cp $(DISTORM_PATH) ./
+	cp $(DISTORM_PATH) ./libdistorm3.a
 
 libShimFS: main.o dispatch.o libdistorm
 	gcc -o $(LIBNAME) main.o dispatch.o -L. -ldl -ldistorm3 -shared
