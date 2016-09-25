@@ -20,7 +20,6 @@ int close(int fildes) {
 	return 0;
 }
 
-/*
 ssize_t read(int fildes, void *buf, size_t nbyte) {
 	if (fpos == 6) {
 		return EOF;
@@ -30,7 +29,7 @@ ssize_t read(int fildes, void *buf, size_t nbyte) {
 	fpos += toread;
 	return toread;
 }
-*/
+
 int guestfs_init(GuestFS *self) {
 	self_global = self;
 	self->name = "hellofs";
