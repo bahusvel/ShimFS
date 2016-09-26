@@ -1,6 +1,7 @@
 #ifndef __SHIMFS__
 #define __SHIMFS__
 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -40,6 +41,7 @@ typedef int (*type_fstat)(int fildes, struct stat *buf);
 typedef int (*type_stat)(const char *path, struct stat *buf);
 typedef int (*type_mkdir)(const char *path, mode_t mode);
 typedef int (*type_rmdir)(const char *path);
+typedef struct dirent *(*type_readdir)(DIR *dirp);
 
 int (*safe_printf)(const char *format, ...);
 
@@ -87,7 +89,12 @@ struct fd_node {
 typedef struct GuestFS {
 	const char *name;
 	void *dlhandle;
+	// think of paths as a mount point, in normal cases you should only have a
+	// few here, if you want to do something like overlayFS just specify "/" and
+	// handle the rest yourself
 	struct path_node paths;
+	// this is where you should store every open file fd, lookups for these will
+	// be made efficient.
 	struct fd_node fds;
 	struct shimfs_ops ops;
 	struct GuestFS *next;
